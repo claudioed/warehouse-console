@@ -1,0 +1,95 @@
+name: CI
+
+# warehouse-console depends on @warehouse/ui-kit via `file:../warehouse-ui-kit`
+# (no npm registry publish step yet, single local workspace). CI checks out
+# both repos as SIBLING directories under $GITHUB_WORKSPACE so that relative
+# path resolves the same way it does on a contributor's machine.
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: warehouse-console
+      - uses: actions/checkout@v7
+        with:
+          repository: claudioed/warehouse-ui-kit
+          ref: develop
+          path: warehouse-ui-kit
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - run: npm ci && npm run build
+        working-directory: warehouse-ui-kit
+      - run: npm ci
+        working-directory: warehouse-console
+      - run: npm run lint
+        working-directory: warehouse-console
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: warehouse-console
+      - uses: actions/checkout@v7
+        with:
+          repository: claudioed/warehouse-ui-kit
+          ref: develop
+          path: warehouse-ui-kit
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - run: npm ci && npm run build
+        working-directory: warehouse-ui-kit
+      - run: npm ci
+        working-directory: warehouse-console
+      - run: npm run typecheck
+        working-directory: warehouse-console
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: warehouse-console
+      - uses: actions/checkout@v7
+        with:
+          repository: claudioed/warehouse-ui-kit
+          ref: develop
+          path: warehouse-ui-kit
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - run: npm ci && npm run build
+        working-directory: warehouse-ui-kit
+      - run: npm ci
+        working-directory: warehouse-console
+      - run: npm run build
+        working-directory: warehouse-console
+
+  trivy-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run Trivy vulnerability scanner (filesystem)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+          ignore-unfixed: true
