@@ -1,0 +1,34 @@
+# Version control / CI
+.git
+.github
+.gitignore
+
+# Docker itself
+Dockerfile
+.dockerignore
+
+# Docs and Helm chart (not needed to build the app image)
+*.md
+docs/
+charts/
+
+# Build output / dependencies (rebuilt in-image)
+node_modules
+dist
+dist-ssr
+.mf
+
+# Test / lint / tool output
+coverage
+coverage.out
+*.test
+
+# Local dev / env
+.env
+.env.*
+*.local
+
+# Editors / OS cruft
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,13 @@
+apiVersion: v2
+name: warehouse-console
+description: Warehouse Console — the operations console shell for the warehouse-systems fleet (order lifecycle tracing and cross-context WMS/WES dashboards), served as a static SPA via nginx
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/claudioed/warehouse-console
+keywords:
+  - warehouse-management-system
+  - spa
+  - react
+  - module-federation
+  - nginx
