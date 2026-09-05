@@ -1,7 +1,7 @@
 # warehouse-console
 
 The React SPA shell for the [warehouse-systems](https://github.com/claudioed?tab=repositories&q=warehouse)
-micro-frontend console. Owns routing, top navigation, the shared design system, and two
+micro-frontend console. Owns routing, top navigation, the shared design system, and four
 cross-cutting screens:
 
 - **Operations Overview** (`/`) — a control-tower landing page: a live KPI strip (pick/pack/
@@ -11,6 +11,19 @@ cross-cutting screens:
 - **Order Lifecycle** (`/order-lifecycle`) — traces one order across all four services that
   touch it (order-management → inventory-storage → wes-work-planning → fulfillment-execution)
   by calling the `console-bff` endpoint on `warehouse-ops-agent`.
+- **WMS Dashboard** (`/wms-dashboard`) — the *what & where* of the warehouse: order funnel,
+  inventory flow accuracy, catalog growth.
+- **WES Dashboard** (`/wes-dashboard`) — the *when & in what order*: planning throughput,
+  fulfillment throughput, labor management and labor performance.
+
+Both dashboards read one section-oriented envelope from the console-bff
+(`GET /console/reports/{wms,wes}?from=&to=`, default trailing 24h) and render each section
+with the ui-kit's SVG chart primitives chosen by the section's own `chartKind`. These are
+eventually-consistent analytical projections, not live reads, so every card carries a
+`FreshnessBadge` — staleness is shown, never hidden. A section whose upstream is degraded
+arrives as `available: false` and renders as a single "data unavailable" card; the rest of
+the dashboard still shows its real numbers. Only a whole-request failure produces a
+dashboard-level error state.
 
 Everything else (`/order-management`, `/inventory`, `/planning`, `/fulfillment`, `/workforce`,
 `/facility`) is a Module Federation remote owned by that bounded context's own repo — this
@@ -58,7 +71,15 @@ npm run build
 
 # with the shell + all 6 remotes + all 5 backend services + BFF running:
 npm run verify:routes   # headless Playwright smoke check of every route
+
+# needs only the shell's own dev server -- stubs the console-bff report calls:
+npm run verify:dashboards
 ```
+
+`verify:dashboards` covers the three states the report screens have to get right — every
+section available (charts draw real geometry), one section `available: false` (that one card
+degrades, the others still draw), and a whole-request failure (one dashboard-level error
+state) — and writes screenshots to `/tmp/warehouse-console-dashboards`.
 
 The console's own service base URLs (`src/config.ts`) point at local-dev ports matching
 `e2e-tests/env.sh`; swap to a runtime `/config.json` fetch before any multi-environment

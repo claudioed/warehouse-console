@@ -122,6 +122,18 @@ export function OverviewScreen() {
             href="/order-lifecycle"
           />
           <LaunchTile
+            context="cross-service"
+            title="WMS Dashboard"
+            description="What & where — order funnel, inventory flow accuracy, catalog growth."
+            href="/wms-dashboard"
+          />
+          <LaunchTile
+            context="cross-service"
+            title="WES Dashboard"
+            description="When & in what order — planning, fulfillment and labor throughput."
+            href="/wes-dashboard"
+          />
+          <LaunchTile
             context="order-management"
             title="Orders"
             description="Intake, allocation state, ship-complete policy."
