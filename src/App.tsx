@@ -3,11 +3,15 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AppShell, type NavItem } from "@warehouse/ui-kit";
 import { OverviewScreen } from "./features/overview/OverviewScreen";
 import { OrderLifecycleScreen } from "./features/order-lifecycle/OrderLifecycleScreen";
+import { WmsDashboardScreen } from "./features/wms-dashboard/WmsDashboardScreen";
+import { WesDashboardScreen } from "./features/wes-dashboard/WesDashboardScreen";
 import { RemoteBoundary } from "./shell/RemoteBoundary";
 
 const NAV: Omit<NavItem, "active">[] = [
   { id: "overview", label: "Overview", href: "/" },
   { id: "order-lifecycle", label: "Order Lifecycle", href: "/order-lifecycle" },
+  { id: "wms-dashboard", label: "WMS Dashboard", href: "/wms-dashboard" },
+  { id: "wes-dashboard", label: "WES Dashboard", href: "/wes-dashboard" },
   { id: "order-mgmt", label: "Orders", href: "/order-management" },
   { id: "inventory", label: "Inventory", href: "/inventory" },
   { id: "planning", label: "Planning", href: "/planning" },
@@ -48,6 +52,8 @@ function Shell() {
       <Routes>
         <Route path="/" element={<OverviewScreen />} />
         <Route path="/order-lifecycle" element={<OrderLifecycleScreen />} />
+        <Route path="/wms-dashboard" element={<WmsDashboardScreen />} />
+        <Route path="/wes-dashboard" element={<WesDashboardScreen />} />
         <Route
           path="/order-management/*"
           element={<RemoteBoundary label="Orders" component={OrdersRemote} />}
