@@ -24,3 +24,14 @@ export const SERVICE_BASE_URL = {
  *  the MFE architecture proposal. Same port as ops-agent's own API
  *  (8096 in e2e-tests/env.sh), new path prefix. */
 export const BFF_BASE_URL = "http://localhost:8096";
+
+/** The two analytical report endpoints backing the WMS and WES dashboards.
+ *  Both answer the same envelope shape (see features/reports/types.ts) and
+ *  both take optional `?from=&to=` (default: trailing 24h). These are
+ *  eventually-consistent projections, not live reads -- every section
+ *  carries its own freshness lag, which the dashboards surface rather than
+ *  hide. */
+export const CONSOLE_REPORTS_URL = {
+  wms: `${BFF_BASE_URL}/console/reports/wms`,
+  wes: `${BFF_BASE_URL}/console/reports/wes`,
+} as const;
