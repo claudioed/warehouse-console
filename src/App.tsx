@@ -38,6 +38,7 @@ const REMOTE_PREFIXES = [
   "/fulfillment",
   "/workforce",
   "/facility",
+  "/process-path",
 ];
 
 // Each lazy() call MUST run exactly once, at module load, not inside a
@@ -58,6 +59,8 @@ const FulfillmentRemote = lazy(() => import("fulfillment_mfe/App"));
 const WorkforceRemote = lazy(() => import("workforce_mfe/App"));
 // @ts-expect-error -- remote module resolved at runtime by Module Federation
 const FacilityRemote = lazy(() => import("facility_mfe/App"));
+// @ts-expect-error -- remote module resolved at runtime by Module Federation
+const ProcessPathRemote = lazy(() => import("process_path_mfe/App"));
 /* eslint-enable react-refresh/only-export-components */
 
 /** Anchored prefix match: a bare startsWith would light up "Inventory"
@@ -111,6 +114,10 @@ function Shell() {
         <Route
           path="/facility/*"
           element={<RemoteBoundary label="Facility" component={FacilityRemote} />}
+        />
+        <Route
+          path="/process-path/*"
+          element={<RemoteBoundary label="Process Paths" component={ProcessPathRemote} />}
         />
         {/* Unmatched URLs used to render the chrome around an empty
             <main> -- a blank page with a working nav and no explanation. */}
