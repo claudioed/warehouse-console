@@ -7,11 +7,16 @@ sidebar_label: Overview
 # Warehouse Console
 
 The React SPA shell for the `warehouse-systems` micro-frontend fleet. It owns
-routing, top navigation, the shared design system, and four cross-cutting
-screens that no single bounded context owns:
+routing, top navigation, the shared design system, and the primary nav's five
+destinations — four cross-cutting screens this shell implements directly,
+plus one launchpad into everything else (see
+[ADR-0001](../adr/0001-shell-owns-cross-cutting-screens-only.md)):
 
-- **Operations Overview** (`/`) — a control-tower landing page: a live KPI
-  strip plus a launchpad grid into every bounded context.
+- **Floor** (`/`) — the console's monitor surface, built on
+  `warehouse-ops-agent`'s `GET /daily-brief` read model: every monitored
+  path across every site, and what needs attention first. Every alarm
+  colour comes from a flag the backend computed; a missing reading renders
+  as missing, never a calm zero.
 - **Order Lifecycle** (`/order-lifecycle`) — traces one order across the four
   services that touch it (order-management → inventory-storage →
   wes-work-planning → fulfillment-execution) via `console-bff`.
@@ -19,6 +24,8 @@ screens that no single bounded context owns:
   order funnel, inventory flow accuracy, catalog growth.
 - **WES Dashboard** (`/wes-dashboard`) — the *when & in what order*: planning
   throughput, fulfillment throughput, labor management and performance.
+- **Contexts** (`/contexts`) — the launchpad grid into every bounded context,
+  reached from its own nav entry rather than repeated on the landing page.
 
 Everything else (`/order-management`, `/inventory`, `/planning`,
 `/fulfillment`, `/workforce`, `/facility`) is a Module Federation **remote**

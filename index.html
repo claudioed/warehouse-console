@@ -3,10 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Operations console for the warehouse-systems fleet: order lifecycle tracing and cross-context WMS/WES dashboards."
+    />
+    <!-- Renders native controls, scrollbars and autofill dark. Without it
+         they come out light against a near-black page. -->
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0b0f14" />
+    <!-- Inline SVG data URI so a favicon costs no asset pipeline and no
+         extra request. Matches AppShell's accent square. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230b0f14'/%3E%3Crect x='3' y='3' width='4' height='4' rx='1' fill='%234d8dff'/%3E%3Crect x='9' y='3' width='4' height='4' rx='1' fill='%238f9bad'/%3E%3Crect x='3' y='9' width='4' height='4' rx='1' fill='%238f9bad'/%3E%3Crect x='9' y='9' width='4' height='4' rx='1' fill='%233dd68c'/%3E%3C/svg%3E"
+    />
     <title>Warehouse Console</title>
+    <!-- The dark background otherwise arrives only with the JS module
+         graph (tokens.css), so every load flashed white first. -->
+    <style>
+      html {
+        background: #0b0f14;
+        color-scheme: dark;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      This console requires JavaScript to display live warehouse operations
+      data.
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
