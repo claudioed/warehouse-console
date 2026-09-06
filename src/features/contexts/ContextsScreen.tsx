@@ -116,6 +116,12 @@ export function ContextsScreen(): ReactElement {
           }
           href="/facility"
         />
+        <LaunchTile
+          context="process-path-management"
+          title="Process Paths"
+          description="The fleet's declared process-path catalogue -- define, revise, deactivate."
+          href="/process-path"
+        />
       </div>
     </div>
   );
