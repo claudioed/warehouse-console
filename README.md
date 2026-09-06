@@ -58,6 +58,7 @@ built at least once) and each remote's own dev server running on its assigned po
 | fulfillment-mfe | 5184 | fulfillment-execution |
 | workforce-mfe | 5185 | workforce-management |
 | facility-mfe | 5186 | facility-layout |
+| process-path-mfe | 5189 | process-path-management |
 
 ```bash
 # one-time: build the sibling ui-kit

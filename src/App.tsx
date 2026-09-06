@@ -18,6 +18,7 @@ const NAV: Omit<NavItem, "active">[] = [
   { id: "fulfillment", label: "Fulfillment", href: "/fulfillment" },
   { id: "workforce", label: "Workforce", href: "/workforce" },
   { id: "facility", label: "Facility", href: "/facility" },
+  { id: "process-path", label: "Process Paths", href: "/process-path" },
 ];
 
 // Each lazy() call MUST run exactly once, at module load, not inside a
@@ -38,6 +39,8 @@ const FulfillmentRemote = lazy(() => import("fulfillment_mfe/App"));
 const WorkforceRemote = lazy(() => import("workforce_mfe/App"));
 // @ts-expect-error -- remote module resolved at runtime by Module Federation
 const FacilityRemote = lazy(() => import("facility_mfe/App"));
+// @ts-expect-error -- remote module resolved at runtime by Module Federation
+const ProcessPathRemote = lazy(() => import("process_path_mfe/App"));
 /* eslint-enable react-refresh/only-export-components */
 
 function Shell() {
@@ -77,6 +80,10 @@ function Shell() {
         <Route
           path="/facility/*"
           element={<RemoteBoundary label="Facility" component={FacilityRemote} />}
+        />
+        <Route
+          path="/process-path/*"
+          element={<RemoteBoundary label="Process Paths" component={ProcessPathRemote} />}
         />
       </Routes>
     </AppShell>

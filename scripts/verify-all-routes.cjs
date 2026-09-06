@@ -17,6 +17,7 @@ const routes = [
   { path: "/fulfillment", label: "fulfillment" },
   { path: "/workforce", label: "workforce" },
   { path: "/facility", label: "facility" },
+  { path: "/process-path", label: "process-path" },
 ];
 
 (async () => {
