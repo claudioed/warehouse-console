@@ -122,6 +122,12 @@ export function ContextsScreen(): ReactElement {
           description="The fleet's declared process-path catalogue -- define, revise, deactivate."
           href="/process-path"
         />
+        <LaunchTile
+          context="labor-performance"
+          title="Labor Performance"
+          description="Engineered labor standards, associate scorecards, fleet-wide task-type performance."
+          href="/labor"
+        />
       </div>
     </div>
   );

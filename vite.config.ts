@@ -51,6 +51,11 @@ export default defineConfig({
           name: "process_path_mfe",
           entry: "http://localhost:5189/remoteEntry.js",
         },
+        labor_mfe: {
+          type: "module",
+          name: "labor_mfe",
+          entry: "http://localhost:5187/remoteEntry.js",
+        },
       },
       shared: {
         react: { singleton: true, requiredVersion: "^19.2.8" },
