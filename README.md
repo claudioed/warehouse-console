@@ -1,13 +1,18 @@
 # warehouse-console
 
 The React SPA shell for the [warehouse-systems](https://github.com/claudioed?tab=repositories&q=warehouse)
-micro-frontend console. Owns routing, top navigation, the shared design system, and four
-cross-cutting screens:
+micro-frontend console. Owns routing, top navigation, the shared design system, and the
+primary nav's five destinations — four cross-cutting screens this shell implements directly,
+plus one launchpad into everything else (see
+[ADR-0001](docs/docs/adr/0001-shell-owns-cross-cutting-screens-only.md) for why the nav is
+shaped this way):
 
-- **Operations Overview** (`/`) — a control-tower landing page: a live KPI strip (pick/pack/
-  SLAM queue depth, active sites) plus a launchpad grid into every bounded context, following
-  established enterprise WMS/ops-dashboard conventions (Manhattan Active WM's shift-start KPI
-  row, SAP Fiori's app-tile launchpad, Grafana/Datadog-style stat panels).
+- **Floor** (`/`) — the console's monitor surface: every monitored path across every site,
+  and what needs attention first. Built entirely on `warehouse-ops-agent`'s existing
+  `GET /daily-brief` read model (backlog, staffing, queue depth, stuck-task and correlated
+  exception signals across every site/path). Every alarm colour comes from a flag the
+  *backend* computed — the shell carries no thresholds of its own — and a missing reading
+  renders as "—" in warning tone, never a calm zero (signal-on-silence).
 - **Order Lifecycle** (`/order-lifecycle`) — traces one order across all four services that
   touch it (order-management → inventory-storage → wes-work-planning → fulfillment-execution)
   by calling the `console-bff` endpoint on `warehouse-ops-agent`.
@@ -15,6 +20,9 @@ cross-cutting screens:
   inventory flow accuracy, catalog growth.
 - **WES Dashboard** (`/wes-dashboard`) — the *when & in what order*: planning throughput,
   fulfillment throughput, labor management and labor performance.
+- **Contexts** (`/contexts`) — the launchpad grid into every bounded context, following
+  established enterprise WMS/ops-dashboard conventions (SAP Fiori's app-tile launchpad). It
+  lights up as active for its own route and for any of the six remote routes below.
 
 Both dashboards read one section-oriented envelope from the console-bff
 (`GET /console/reports/{wms,wes}?from=&to=`, default trailing 24h) and render each section
@@ -26,8 +34,17 @@ the dashboard still shows its real numbers. Only a whole-request failure produce
 dashboard-level error state.
 
 Everything else (`/order-management`, `/inventory`, `/planning`, `/fulfillment`, `/workforce`,
-`/facility`) is a Module Federation remote owned by that bounded context's own repo — this
-shell only lazy-loads and hosts them; it never contains their business logic.
+`/facility`) is a Module Federation remote owned by that bounded context's own repo, reachable
+from the Contexts launchpad — this shell only lazy-loads and hosts them; it never contains
+their business logic. An unmatched URL renders the shell's own client-side "Page not found"
+screen rather than a server 404.
+
+No repo in this fleet console owns an OpenAPI or AsyncAPI spec of its own: this shell has no
+domain model to describe (no aggregates, no endpoints it publishes), so there is nothing to
+spec here. Each bounded-context service publishes its own OpenAPI (HTTP) and AsyncAPI (Kafka)
+definitions in its own repo; `console-bff`'s report-envelope shape is documented in
+`warehouse-ops-agent`'s ADR-0002/ADR-0003 rather than as a formal spec, since it is a
+console-only read layer, not a public API.
 
 ## Study project disclaimer
 

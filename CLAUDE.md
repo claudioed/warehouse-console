@@ -3,12 +3,16 @@
 The React SPA shell for the `warehouse-systems` micro-frontend fleet. It owns
 routing, top navigation, the shared design system consumption, and the four
 screens that no single bounded context owns because they are cross-cutting:
-Operations landing (`/`), Order Lifecycle (`/order-lifecycle`), and the WMS/WES
-report dashboards (`/wms-dashboard`, `/wes-dashboard`). Everything else
-(`/order-management`, `/inventory`, `/planning`, `/fulfillment`, `/workforce`,
-`/facility`) is a Module Federation **remote** owned and deployed by that
-bounded context's own repo — this shell only lazy-loads and hosts them; it
-never contains their business logic.
+Floor (`/`, built on `warehouse-ops-agent`'s `GET /daily-brief`), Order
+Lifecycle (`/order-lifecycle`), and the WMS/WES report dashboards
+(`/wms-dashboard`, `/wes-dashboard`). The primary nav's fifth destination,
+Contexts (`/contexts`), is the launchpad into the six bounded-context
+remotes rather than a cross-cutting screen of its own — see ADR-0001 in
+`docs/docs/adr/`. Everything else (`/order-management`, `/inventory`,
+`/planning`, `/fulfillment`, `/workforce`, `/facility`) is a Module
+Federation **remote** owned and deployed by that bounded context's own repo
+— this shell only lazy-loads and hosts them; it never contains their
+business logic.
 
 Source of truth for the domain model: `/Users/claudioed/docs/amazon-fulfillment-ddd.md`
 and `/Users/claudioed/warehouse-systems-ddd.md`. This repo does not itself
@@ -40,7 +44,7 @@ src/
   shell/            AppShell composition, RemoteBoundary (lazy+Suspense+error
                      boundary for remotes), RouterLink, useDocumentTitle
   features/
-    floor/           Operations landing screen ("/")
+    floor/           Floor: monitor-surface screen ("/"), reads GET /daily-brief
     order-lifecycle/ Cross-service order trace (calls console-bff)
     wms-dashboard/    WMS report dashboard (envelope from console-bff)
     wes-dashboard/    WES report dashboard (envelope from console-bff)

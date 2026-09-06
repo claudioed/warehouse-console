@@ -1,23 +1,43 @@
 import { lazy } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { AppShell, type NavItem } from "@warehouse/ui-kit";
-import { OverviewScreen } from "./features/overview/OverviewScreen";
+import { AppShell, NavigationProvider, type NavItem } from "@warehouse/ui-kit";
+import { FloorScreen } from "./features/floor/FloorScreen";
+import { ContextsScreen } from "./features/contexts/ContextsScreen";
 import { OrderLifecycleScreen } from "./features/order-lifecycle/OrderLifecycleScreen";
 import { WmsDashboardScreen } from "./features/wms-dashboard/WmsDashboardScreen";
 import { WesDashboardScreen } from "./features/wes-dashboard/WesDashboardScreen";
+import { NotFoundScreen } from "./features/not-found/NotFoundScreen";
 import { RemoteBoundary } from "./shell/RemoteBoundary";
+import { RouterLink } from "./shell/RouterLink";
 
+/**
+ * Five destinations, not ten.
+ *
+ * The nav previously listed every screen in the product AND the landing
+ * page repeated all of them as launchpad tiles -- two competing navigation
+ * surfaces, with ten items crammed into a fixed 56px bar at 13px.
+ *
+ * The six bounded-context remotes now live behind "Contexts", which is
+ * where the launchpad moved. Their routes are unchanged, so existing deep
+ * links and bookmarks keep working.
+ */
 const NAV: Omit<NavItem, "active">[] = [
-  { id: "overview", label: "Overview", href: "/" },
+  { id: "floor", label: "Floor", href: "/" },
   { id: "order-lifecycle", label: "Order Lifecycle", href: "/order-lifecycle" },
   { id: "wms-dashboard", label: "WMS Dashboard", href: "/wms-dashboard" },
   { id: "wes-dashboard", label: "WES Dashboard", href: "/wes-dashboard" },
-  { id: "order-mgmt", label: "Orders", href: "/order-management" },
-  { id: "inventory", label: "Inventory", href: "/inventory" },
-  { id: "planning", label: "Planning", href: "/planning" },
-  { id: "fulfillment", label: "Fulfillment", href: "/fulfillment" },
-  { id: "workforce", label: "Workforce", href: "/workforce" },
-  { id: "facility", label: "Facility", href: "/facility" },
+  { id: "contexts", label: "Contexts", href: "/contexts" },
+];
+
+/** Remote route prefixes. They are not nav items any more, but "Contexts"
+ *  must still light up while one of them is open. */
+const REMOTE_PREFIXES = [
+  "/order-management",
+  "/inventory",
+  "/planning",
+  "/fulfillment",
+  "/workforce",
+  "/facility",
 ];
 
 // Each lazy() call MUST run exactly once, at module load, not inside a
@@ -40,17 +60,31 @@ const WorkforceRemote = lazy(() => import("workforce_mfe/App"));
 const FacilityRemote = lazy(() => import("facility_mfe/App"));
 /* eslint-enable react-refresh/only-export-components */
 
+/** Anchored prefix match: a bare startsWith would light up "Inventory"
+ *  for a hypothetical /inventory-audit route. */
+function isUnder(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
 function Shell() {
   const location = useLocation();
   const nav: NavItem[] = NAV.map((item) => ({
     ...item,
-    active: item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href),
+    active:
+      item.href === "/"
+        ? location.pathname === "/"
+        : item.id === "contexts"
+          ? // Contexts owns the six remote routes as well as its own.
+            location.pathname.startsWith("/contexts") ||
+            REMOTE_PREFIXES.some((p) => isUnder(location.pathname, p))
+          : isUnder(location.pathname, item.href),
   }));
 
   return (
     <AppShell nav={nav}>
       <Routes>
-        <Route path="/" element={<OverviewScreen />} />
+        <Route path="/" element={<FloorScreen />} />
+        <Route path="/contexts" element={<ContextsScreen />} />
         <Route path="/order-lifecycle" element={<OrderLifecycleScreen />} />
         <Route path="/wms-dashboard" element={<WmsDashboardScreen />} />
         <Route path="/wes-dashboard" element={<WesDashboardScreen />} />
@@ -78,6 +112,9 @@ function Shell() {
           path="/facility/*"
           element={<RemoteBoundary label="Facility" component={FacilityRemote} />}
         />
+        {/* Unmatched URLs used to render the chrome around an empty
+            <main> -- a blank page with a working nav and no explanation. */}
+        <Route path="*" element={<NotFoundScreen />} />
       </Routes>
     </AppShell>
   );
@@ -86,7 +123,17 @@ function Shell() {
 export function App() {
   return (
     <BrowserRouter>
-      <Shell />
+      {/*
+        Supplies the ui-kit with this app's router Link. Without it,
+        AppShell's nav, KpiStat's drill-downs and every LaunchTile render
+        plain <a href> elements, so each click is a full document
+        navigation that tears down the SPA and re-downloads every Module
+        Federation remoteEntry.js -- defeating the module-scope lazy()
+        work below.
+      */}
+      <NavigationProvider link={RouterLink}>
+        <Shell />
+      </NavigationProvider>
     </BrowserRouter>
   );
 }
