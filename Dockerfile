@@ -10,14 +10,14 @@
 # the environment it was built for. Not addressed by this Dockerfile.
 
 # --- ui-kit build stage (sibling dependency) ---
-FROM node:22-alpine AS uikit-build
+FROM node:26-alpine AS uikit-build
 WORKDIR /uikit
 COPY --from=uikit . .
 RUN --mount=type=cache,target=/root/.npm \
     npm ci && npm run build
 
 # --- app build stage ---
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /workspace/warehouse-ui-kit
 COPY --from=uikit-build /uikit/package.json ./package.json
 COPY --from=uikit-build /uikit/dist ./dist
