@@ -30,7 +30,7 @@ COPY . .
 RUN npm run build
 
 # --- runtime stage ---
-FROM nginxinc/nginx-unprivileged:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 # apk upgrade picks up any CVE fixes published to the 3.21 branch since the
 # base image was last rebuilt (openssl, libxml2, etc.), matching the fleet's
 # Go-service runtime stages. Root is only needed for this one step.
