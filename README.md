@@ -104,3 +104,53 @@ The console's own service base URLs (`src/config.ts`) point at local-dev ports m
 `e2e-tests/env.sh`; swap to a runtime `/config.json` fetch before any multi-environment
 deployment (Vite env vars are baked in at build time, which doesn't fit "one image, many
 environments").
+
+## Deployment topology (kind / localhost)
+
+The shell and every remote are static bundles served by `nginx-unprivileged`
+pods. The fleet deliberately splits its two edges onto two independent host
+entrypoints, and **neither proxies to the other**:
+
+```
+http://localhost        -> Nginx web gateway -> this shell  (/)
+                                             -> each remote (/mfes/<context>/)
+
+http://localhost:8000   -> Kong              -> every bounded-context API
+                                                (/api/<context>/...)
+```
+
+Kong never serves HTML, JavaScript, CSS or fonts. The web gateway never
+proxies an API.
+
+Build the image (the ui-kit is a sibling checkout, so it is supplied as a
+named build context):
+
+```bash
+docker build --build-context uikit=../warehouse-ui-kit \
+  -t warehouse/warehouse-console:local .
+```
+
+### One image, many environments
+
+The former known gap — `src/config.ts` baking service URLs in at build time —
+is closed. `src/runtime-config.ts` fetches `/config.json` (mounted from the
+chart's ConfigMap) *before* the app mounts and publishes the validated result
+on `window.__WAREHOUSE_CONFIG__`; every remote reads the same object to build
+its own API base.
+
+```json
+{ "apiOrigin": "http://localhost:8000" }
+```
+
+Set it with `runtimeConfig.apiOrigin` in the Helm chart. Validation is strict
+and fail-fast: a missing, malformed, or path-carrying origin stops the console
+from mounting and says why, rather than rendering a silently broken UI.
+
+Two details worth knowing before changing this:
+
+- `src/main.tsx` imports `./App` **dynamically**, after the config resolves. A
+  static import would be hoisted and evaluated first, so `config.ts` would
+  read an empty config and throw in production.
+- The ConfigMap is mounted with `subPath`, which kubelet does **not**
+  live-update, so the Deployment carries a `checksum/runtime-config`
+  annotation to roll the pod whenever the value changes.

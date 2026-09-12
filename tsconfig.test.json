@@ -3,7 +3,9 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
     "target": "es2023",
     "lib": ["ES2023", "DOM"],
-    "types": ["node"],
+    /* config.ts reads import.meta.env.PROD, so the tests that import it need
+       Vite's client types as well as node's. */
+    "types": ["node", "vite/client"],
     "skipLibCheck": true,
 
     /* Bundler mode */
