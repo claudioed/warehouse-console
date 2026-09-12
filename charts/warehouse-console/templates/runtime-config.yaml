@@ -1,0 +1,19 @@
+{{- if .Values.runtimeConfig.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "warehouse-console.fullname" . }}-runtime-config
+  labels:
+    {{- include "warehouse-console.labels" . | nindent 4 }}
+data:
+  # Fetched by the shell before it mounts, and published on
+  # window.__WAREHOUSE_CONFIG__ for every federated remote to read. This is
+  # what lets ONE console image serve any environment.
+  #
+  # apiOrigin points at KONG, which is a different host entrypoint from the
+  # Nginx web gateway that served this page -- the fleet deliberately keeps
+  # the two edges independent, so Kong never handles HTML/JS/CSS and the web
+  # gateway never proxies an API. Kong carries the matching CORS policy.
+  config.json: |
+    {{- toJson (dict "apiOrigin" (required "runtimeConfig.apiOrigin is required when runtimeConfig.enabled" .Values.runtimeConfig.apiOrigin)) | nindent 4 }}
+{{- end }}
