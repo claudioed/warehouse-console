@@ -77,7 +77,7 @@ function WhatItOwns() {
                 Dashboard, WES Dashboard
               </li>
               <li>
-                Hosting six independently-deployed Module Federation remotes
+                Hosting eight independently-deployed Module Federation remotes
               </li>
             </ul>
           </div>

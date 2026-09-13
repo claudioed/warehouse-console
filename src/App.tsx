@@ -17,7 +17,7 @@ import { RouterLink } from "./shell/RouterLink";
  * page repeated all of them as launchpad tiles -- two competing navigation
  * surfaces, with ten items crammed into a fixed 56px bar at 13px.
  *
- * The six bounded-context remotes now live behind "Contexts", which is
+ * The eight bounded-context remotes now live behind "Contexts", which is
  * where the launchpad moved. Their routes are unchanged, so existing deep
  * links and bookmarks keep working.
  */
@@ -80,7 +80,7 @@ function Shell() {
       item.href === "/"
         ? location.pathname === "/"
         : item.id === "contexts"
-          ? // Contexts owns the six remote routes as well as its own.
+          ? // Contexts owns the eight remote routes as well as its own.
             location.pathname.startsWith("/contexts") ||
             REMOTE_PREFIXES.some((p) => isUnder(location.pathname, p))
           : isUnder(location.pathname, item.href),

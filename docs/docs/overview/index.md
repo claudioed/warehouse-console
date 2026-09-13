@@ -28,9 +28,10 @@ plus one launchpad into everything else (see
   reached from its own nav entry rather than repeated on the landing page.
 
 Everything else (`/order-management`, `/inventory`, `/planning`,
-`/fulfillment`, `/workforce`, `/facility`) is a Module Federation **remote**
-owned and deployed by that bounded context's own repo — this shell only
-lazy-loads and hosts them; it never contains their business logic.
+`/fulfillment`, `/workforce`, `/facility`, `/process-path`, `/labor`) is a
+Module Federation **remote** owned and deployed by that bounded context's
+own repo — this shell only lazy-loads and hosts them; it never contains
+their business logic.
 
 ## Study project disclaimer
 
@@ -47,5 +48,5 @@ software and has no support guarantees.
   wiring works and the rules for lazy-loading a remote safely.
 - [Cross-cutting screens](../architecture/cross-cutting-screens.md) — how Order
   Lifecycle and the WMS/WES dashboards read from `console-bff`.
-- [Context map](../ecosystem/context-map.md) — how this shell fits among the six
+- [Context map](../ecosystem/context-map.md) — how this shell fits among the eight
   bounded-context services and `warehouse-ops-agent`.

@@ -22,7 +22,7 @@ shaped this way):
   fulfillment throughput, labor management and labor performance.
 - **Contexts** (`/contexts`) — the launchpad grid into every bounded context, following
   established enterprise WMS/ops-dashboard conventions (SAP Fiori's app-tile launchpad). It
-  lights up as active for its own route and for any of the six remote routes below.
+  lights up as active for its own route and for any of the eight remote routes below.
 
 Both dashboards read one section-oriented envelope from the console-bff
 (`GET /console/reports/{wms,wes}?from=&to=`, default trailing 24h) and render each section
@@ -34,10 +34,10 @@ the dashboard still shows its real numbers. Only a whole-request failure produce
 dashboard-level error state.
 
 Everything else (`/order-management`, `/inventory`, `/planning`, `/fulfillment`, `/workforce`,
-`/facility`) is a Module Federation remote owned by that bounded context's own repo, reachable
-from the Contexts launchpad — this shell only lazy-loads and hosts them; it never contains
-their business logic. An unmatched URL renders the shell's own client-side "Page not found"
-screen rather than a server 404.
+`/facility`, `/process-path`, `/labor`) is a Module Federation remote owned by that bounded
+context's own repo, reachable from the Contexts launchpad — this shell only lazy-loads and
+hosts them; it never contains their business logic. An unmatched URL renders the shell's own
+client-side "Page not found" screen rather than a server 404.
 
 No repo in this fleet console owns an OpenAPI or AsyncAPI spec of its own: this shell has no
 domain model to describe (no aggregates, no endpoints it publishes), so there is nothing to
@@ -75,8 +75,8 @@ built at least once) and each remote's own dev server running on its assigned po
 | fulfillment-mfe | 5184 | fulfillment-execution |
 | workforce-mfe | 5185 | workforce-management |
 | facility-mfe | 5186 | facility-layout |
-| process-path-mfe | 5189 | process-path-management |
 | labor-mfe | 5187 | labor-performance |
+| process-path-mfe | 5189 | process-path-management |
 
 ```bash
 # one-time: build the sibling ui-kit
@@ -88,7 +88,7 @@ npm run typecheck    # tsc -b --noEmit
 npm run lint         # oxlint
 npm run build
 
-# with the shell + all 6 remotes + all 5 backend services + BFF running:
+# with the shell + all 8 remotes + all 8 backend services + BFF running:
 npm run verify:routes   # headless Playwright smoke check of every route
 
 # needs only the shell's own dev server -- stubs the console-bff report calls:
