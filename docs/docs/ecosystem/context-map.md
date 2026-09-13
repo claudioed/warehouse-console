@@ -2,7 +2,7 @@
 id: context-map
 title: Context map
 sidebar_label: Context map
-description: Where warehouse-console sits among the six bounded-context services and warehouse-ops-agent.
+description: Where warehouse-console sits among the eight bounded-context services and warehouse-ops-agent.
 ---
 
 # Context map
@@ -21,6 +21,8 @@ graph TD
   FE["fulfillment-execution<br/><i>Core</i>"]
   WM["workforce-management<br/><i>Supporting</i>"]
   FL["facility-layout<br/><i>Generic</i>"]
+  PP["process-path-management<br/><i>Generic</i>"]
+  LP["labor-performance<br/><i>Supporting</i>"]
   OA["warehouse-ops-agent<br/>(console-bff)"]
 
   Console -->|"hosts order_mgmt_mfe"| OM
@@ -29,12 +31,14 @@ graph TD
   Console -->|"hosts fulfillment_mfe"| FE
   Console -->|"hosts workforce_mfe"| WM
   Console -->|"hosts facility_mfe"| FL
+  Console -->|"hosts process_path_mfe"| PP
+  Console -->|"hosts labor_mfe"| LP
   Console -->|"Order Lifecycle + WMS/WES reports"| OA
 ```
 
 ## Relationship to each remote
 
-For the six bounded-context remotes, the relationship is purely **hosting**:
+For the eight bounded-context remotes, the relationship is purely **hosting**:
 this shell lazy-loads each remote's independently-built bundle and gives it a
 route. It never reaches into a remote's business logic, and a remote never
 reaches into this shell's — the only shared surface is

@@ -7,7 +7,7 @@ sidebar_label: Module Federation
 # Module Federation
 
 This app is the federation **host** (`@module-federation/vite`); each of the
-six remotes is built and deployed independently by its own bounded-context
+eight remotes is built and deployed independently by its own bounded-context
 repo.
 
 ```mermaid
@@ -19,6 +19,8 @@ graph LR
   Fulfillment["fulfillment_mfe :5184"]
   Workforce["workforce_mfe :5185"]
   Facility["facility_mfe :5186"]
+  Labor["labor_mfe :5187"]
+  ProcessPath["process_path_mfe :5189"]
 
   Console --> Orders
   Console --> Inventory
@@ -26,6 +28,8 @@ graph LR
   Console --> Fulfillment
   Console --> Workforce
   Console --> Facility
+  Console --> Labor
+  Console --> ProcessPath
 ```
 
 ## Shared singletons

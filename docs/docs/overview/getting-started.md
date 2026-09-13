@@ -20,6 +20,8 @@ server running on its assigned port.
 | fulfillment-mfe | 5184 | fulfillment-execution |
 | workforce-mfe | 5185 | workforce-management |
 | facility-mfe | 5186 | facility-layout |
+| labor-mfe | 5187 | labor-performance |
+| process-path-mfe | 5189 | process-path-management |
 
 ## Run it
 
@@ -37,7 +39,7 @@ npm run build
 ## Verify
 
 ```bash
-# with the shell + all 6 remotes + all 5 backend services + BFF running:
+# with the shell + all 8 remotes + all 8 backend services + BFF running:
 npm run verify:routes
 
 # needs only the shell's own dev server -- stubs the console-bff report calls:
