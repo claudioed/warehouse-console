@@ -35,6 +35,16 @@ securityContext:
   capabilities:
     drop: ["ALL"]
 
+# Runtime configuration served at /config.json from a ConfigMap, so ONE image
+# serves any environment. apiOrigin is KONG's host entrypoint -- a different
+# origin from the Nginx web gateway that serves this SPA, because the fleet
+# keeps its two edges independent (Kong never serves assets; the web gateway
+# never proxies an API). Kong carries the matching CORS policy for this page's
+# origin.
+runtimeConfig:
+  enabled: true
+  apiOrigin: "http://localhost:8000"
+
 service:
   type: ClusterIP
   port: 80

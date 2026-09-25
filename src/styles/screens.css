@@ -1,0 +1,365 @@
+/**
+ * Console screen styles.
+ *
+ * Kept in one stylesheet imported from main.tsx rather than beside each
+ * screen: tsconfig.app.json enables `allowArbitraryExtensions`, under which
+ * a relative `import "./Foo.css"` resolves against a sibling `Foo.d.css.ts`
+ * instead of vite/client's `*.css` wildcard.
+ *
+ * Design rule for the Floor surface: STEADY STATE IS MONOCHROME. Colour is
+ * reserved for things a supervisor must act on, so a wall of quiet lanes
+ * reads as quiet and a single alarming one is unmissable across a room.
+ * This is what structurally prevents the old failure mode where a dead feed
+ * rendered calmer than a busy one.
+ */
+
+/* ---- Floor: page ----------------------------------------------------- */
+
+.wh-floor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wh-space-5);
+}
+
+.wh-floor__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--wh-space-4);
+}
+
+.wh-floor__title {
+  margin: 0;
+  font-size: var(--wh-font-size-2xl);
+  line-height: var(--wh-line-height-tight);
+}
+
+.wh-floor__subtitle {
+  margin: var(--wh-space-2) 0 0;
+  color: var(--wh-color-text-muted);
+  font-size: var(--wh-font-size-sm);
+}
+
+/* ---- Floor: live indicator ------------------------------------------- */
+
+.wh-floor__live {
+  display: flex;
+  align-items: center;
+  gap: var(--wh-space-2);
+  font-size: var(--wh-font-size-xs);
+  color: var(--wh-color-text-muted);
+  font-family: var(--wh-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.wh-floor__live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--wh-color-status-success);
+  animation: wh-floor-pulse 2s ease-in-out infinite;
+}
+
+/* Data on screen is older than it looks: the last refresh failed. */
+.wh-floor__live--stale .wh-floor__live-dot {
+  background: var(--wh-color-status-warning);
+  animation: none;
+}
+
+.wh-floor__live--stale {
+  color: var(--wh-color-status-warning);
+}
+
+@keyframes wh-floor-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ---- Floor: fleet summary strip -------------------------------------- */
+
+.wh-floor__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wh-space-5);
+  padding: var(--wh-space-4) var(--wh-space-5);
+  background: var(--wh-color-bg-raised);
+  border: 1px solid var(--wh-color-border);
+  border-radius: var(--wh-radius-lg);
+}
+
+.wh-floor__summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wh-floor__summary-value {
+  font-family: var(--wh-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--wh-font-size-xl);
+  font-weight: var(--wh-font-weight-semibold);
+  line-height: var(--wh-line-height-tight);
+}
+
+.wh-floor__summary-label {
+  font-size: var(--wh-font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--wh-letter-spacing-eyebrow);
+  color: var(--wh-color-text-muted);
+}
+
+.wh-floor__summary-value--critical {
+  color: var(--wh-color-status-danger);
+}
+.wh-floor__summary-value--warning {
+  color: var(--wh-color-status-warning);
+}
+.wh-floor__summary-value--quiet {
+  color: var(--wh-color-text-faint);
+}
+
+/* ---- Floor: exceptions ----------------------------------------------- */
+
+.wh-floor__section-title {
+  margin: 0 0 var(--wh-space-3);
+  font-size: var(--wh-font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--wh-letter-spacing-eyebrow);
+  color: var(--wh-color-text-muted);
+  font-weight: var(--wh-font-weight-semibold);
+}
+
+.wh-floor__exceptions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wh-space-2);
+}
+
+.wh-exception {
+  border: 1px solid var(--wh-color-border);
+  border-left: 3px solid var(--wh-color-status-neutral);
+  border-radius: var(--wh-radius-md);
+  background: var(--wh-color-bg-raised);
+  padding: var(--wh-space-3) var(--wh-space-4);
+}
+
+.wh-exception--critical {
+  border-left-color: var(--wh-color-status-danger);
+}
+.wh-exception--warning {
+  border-left-color: var(--wh-color-status-warning);
+}
+.wh-exception--info {
+  border-left-color: var(--wh-color-status-progress);
+}
+
+.wh-exception__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--wh-space-3);
+}
+
+.wh-exception__severity {
+  font-size: var(--wh-font-size-xs);
+  font-weight: var(--wh-font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--wh-letter-spacing-eyebrow);
+}
+
+.wh-exception--critical .wh-exception__severity {
+  color: var(--wh-color-status-danger);
+}
+.wh-exception--warning .wh-exception__severity {
+  color: var(--wh-color-status-warning);
+}
+.wh-exception--info .wh-exception__severity {
+  color: var(--wh-color-status-progress);
+}
+
+.wh-exception__where {
+  font-family: var(--wh-font-mono);
+  font-size: var(--wh-font-size-sm);
+  color: var(--wh-color-text);
+}
+
+.wh-exception__summary {
+  margin: var(--wh-space-1) 0 0;
+  font-size: var(--wh-font-size-sm);
+  color: var(--wh-color-text-muted);
+  line-height: var(--wh-line-height-snug);
+}
+
+.wh-exception__evidence {
+  margin: var(--wh-space-2) 0 0;
+  padding: 0 0 0 var(--wh-space-4);
+  font-size: var(--wh-font-size-xs);
+  font-family: var(--wh-font-mono);
+  color: var(--wh-color-text-faint);
+  line-height: var(--wh-line-height-snug);
+}
+
+.wh-exception__toggle {
+  margin-top: var(--wh-space-2);
+  background: none;
+  border: 1px solid var(--wh-color-border);
+  border-radius: var(--wh-radius-sm);
+  color: var(--wh-color-text-muted);
+  font-size: var(--wh-font-size-xs);
+  font-family: inherit;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.wh-exception__toggle:hover {
+  color: var(--wh-color-text);
+  border-color: var(--wh-color-accent);
+}
+
+/* ---- Floor: path lanes ------------------------------------------------ */
+
+.wh-floor__paths {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--wh-space-4);
+}
+
+.wh-path {
+  border: 1px solid var(--wh-color-border);
+  border-radius: var(--wh-radius-lg);
+  background: var(--wh-color-bg-raised);
+  padding: var(--wh-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wh-space-3);
+}
+
+/* A lane with a correlated exception gets an outline; a healthy lane is
+   deliberately plain so the alarming ones stand out at a distance. */
+.wh-path--critical {
+  border-color: var(--wh-color-status-danger);
+}
+.wh-path--warning {
+  border-color: var(--wh-color-status-warning);
+}
+
+.wh-path__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--wh-space-2);
+}
+
+.wh-path__name {
+  font-family: var(--wh-font-mono);
+  font-size: var(--wh-font-size-sm);
+  font-weight: var(--wh-font-weight-semibold);
+}
+
+.wh-path__process {
+  font-size: var(--wh-font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--wh-letter-spacing-eyebrow);
+  color: var(--wh-color-text-faint);
+}
+
+.wh-path__metrics {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--wh-space-1) var(--wh-space-3);
+  align-items: baseline;
+}
+
+.wh-path__metric-label {
+  font-size: var(--wh-font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--wh-letter-spacing-eyebrow);
+  color: var(--wh-color-text-muted);
+}
+
+.wh-path__metric-value {
+  margin: 0;
+  text-align: right;
+  font-family: var(--wh-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--wh-font-size-lg);
+  font-weight: var(--wh-font-weight-semibold);
+  line-height: var(--wh-line-height-tight);
+}
+
+.wh-path__metric-value--alarm {
+  color: var(--wh-color-status-danger);
+}
+
+.wh-path__metric-value--warn {
+  color: var(--wh-color-status-warning);
+}
+
+/* "We did not get a reading" -- never styled like a calm zero. */
+.wh-path__metric-value--nosignal {
+  color: var(--wh-color-status-warning);
+  font-weight: var(--wh-font-weight-regular);
+}
+
+.wh-path__unavailable {
+  margin: 0;
+  padding: var(--wh-space-2) var(--wh-space-3);
+  list-style: none;
+  border-radius: var(--wh-radius-sm);
+  background: var(--wh-color-status-warning-bg);
+  color: var(--wh-color-status-warning);
+  font-size: var(--wh-font-size-xs);
+  line-height: var(--wh-line-height-snug);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wh-path__unavailable-service {
+  font-family: var(--wh-font-mono);
+  font-weight: var(--wh-font-weight-semibold);
+}
+
+/* ---- shared: error / empty ------------------------------------------- */
+
+.wh-screen-error {
+  color: var(--wh-color-status-danger);
+}
+
+.wh-screen-hint {
+  margin-top: var(--wh-space-2);
+  color: var(--wh-color-text-muted);
+  font-size: var(--wh-font-size-sm);
+}
+
+.wh-retry {
+  margin-top: var(--wh-space-3);
+  background: none;
+  border: 1px solid var(--wh-color-accent);
+  border-radius: var(--wh-radius-md);
+  color: var(--wh-color-accent);
+  font-family: inherit;
+  font-size: var(--wh-font-size-sm);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.wh-retry:hover {
+  background: var(--wh-color-accent-muted);
+}
+
+.wh-contexts__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--wh-space-4);
+}

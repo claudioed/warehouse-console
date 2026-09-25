@@ -13,10 +13,16 @@ spec:
       {{- include "warehouse-console.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        {{- if .Values.runtimeConfig.enabled }}
+        # Rolls the pod whenever the runtime config content changes. The
+        # ConfigMap is mounted via subPath, which kubelet does NOT live-update,
+        # so without this a changed apiOrigin would never reach the browser.
+        checksum/runtime-config: {{ include (print $.Template.BasePath "/runtime-config.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "warehouse-console.selectorLabels" . | nindent 8 }}
         {{- with .Values.podLabels }}
@@ -51,6 +57,14 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
+            {{- if .Values.runtimeConfig.enabled }}
+            # Mounted as a single file so it lands beside index.html in the
+            # image's web root without shadowing the rest of the bundle.
+            - name: runtime-config
+              mountPath: /usr/share/nginx/html/config.json
+              subPath: config.json
+              readOnly: true
+            {{- end }}
             - name: nginx-cache
               mountPath: /var/cache/nginx
             - name: nginx-run
@@ -58,6 +72,11 @@ spec:
             - name: tmp
               mountPath: /tmp
       volumes:
+        {{- if .Values.runtimeConfig.enabled }}
+        - name: runtime-config
+          configMap:
+            name: {{ include "warehouse-console.fullname" . }}-runtime-config
+        {{- end }}
         - name: nginx-cache
           emptyDir: {}
         - name: nginx-run

@@ -3,35 +3,40 @@
 The React SPA shell for the `warehouse-systems` micro-frontend fleet. It owns
 routing, top navigation, the shared design system consumption, and the four
 screens that no single bounded context owns because they are cross-cutting:
-Operations landing (`/`), Order Lifecycle (`/order-lifecycle`), and the WMS/WES
-report dashboards (`/wms-dashboard`, `/wes-dashboard`). Everything else
-(`/order-management`, `/inventory`, `/planning`, `/fulfillment`, `/workforce`,
-`/facility`) is a Module Federation **remote** owned and deployed by that
+Floor (`/`, built on `warehouse-ops-agent`'s `GET /daily-brief`), Order
+Lifecycle (`/order-lifecycle`), and the WMS/WES report dashboards
+(`/wms-dashboard`, `/wes-dashboard`). The primary nav's fifth destination,
+Contexts (`/contexts`), is the launchpad into the eight bounded-context
+remotes rather than a cross-cutting screen of its own — see ADR-0001 in
+`docs/docs/adr/`. Everything else (`/order-management`, `/inventory`,
+`/planning`, `/fulfillment`, `/workforce`, `/facility`, `/process-path`,
+`/labor`) is a Module Federation **remote** owned and deployed by that
 bounded context's own repo — this shell only lazy-loads and hosts them; it
 never contains their business logic.
 
 Source of truth for the domain model: `/Users/claudioed/docs/amazon-fulfillment-ddd.md`
 and `/Users/claudioed/warehouse-systems-ddd.md`. This repo does not itself
 model a bounded context — it is presentation/composition infrastructure that
-sits in front of the six that do.
+sits in front of the eight that do.
 
 ## Strategic classification (read this before writing any code)
 
 This is **not** a Generic/Core/Supporting subdomain in the DDD sense — it has
 no aggregates, no domain events, no persistence. It is the fleet's **shared
-composition root**: a Module Federation **host** that assembles six
+composition root**: a Module Federation **host** that assembles eight
 independently-built remotes into one navigable product, plus a thin
 BFF-consuming read layer for the two cross-cutting concerns (Order Lifecycle,
 WMS/WES dashboards) that no single remote can answer on its own.
 
 **Relationship to the rest of the system**: every bounded-context service is
 upstream of this shell for its own remote (`facility-mfe`, `order_mgmt_mfe`,
-etc.) — this repo has zero business logic of theirs, only the routing/hosting
-glue. For the two cross-cutting screens, this shell is a **downstream
-Conformist** to `warehouse-ops-agent`'s `console-bff` (Order Lifecycle trace,
-`GET /console/reports/{wms,wes}`) — it renders whatever shape the BFF
-publishes and does not reinterpret domain meaning. **No shared database,
-ever**: every cross-service view goes through a REST API, never a DB.
+`process_path_mfe`, `labor_mfe`, etc.) — this repo has zero business logic of
+theirs, only the routing/hosting glue. For the two cross-cutting screens,
+this shell is a **downstream Conformist** to `warehouse-ops-agent`'s
+`console-bff` (Order Lifecycle trace, `GET /console/reports/{wms,wes}`) — it
+renders whatever shape the BFF publishes and does not reinterpret domain
+meaning. **No shared database, ever**: every cross-service view goes through
+a REST API, never a DB.
 
 ## Architecture (NON-NEGOTIABLE)
 
@@ -40,13 +45,13 @@ src/
   shell/            AppShell composition, RemoteBoundary (lazy+Suspense+error
                      boundary for remotes), RouterLink, useDocumentTitle
   features/
-    floor/           Operations landing screen ("/")
+    floor/           Floor: monitor-surface screen ("/"), reads GET /daily-brief
     order-lifecycle/ Cross-service order trace (calls console-bff)
     wms-dashboard/    WMS report dashboard (envelope from console-bff)
     wes-dashboard/    WES report dashboard (envelope from console-bff)
     reports/          Shared report-dashboard rendering (ReportDashboard,
                        envelope types) used by both wms/wes dashboards
-    contexts/         Launchpad into the six bounded-context remotes
+    contexts/         Launchpad into the eight bounded-context remotes
     not-found/        Client-rendered 404 (SPA fallback lands here, not a
                        server 404 — see nginx.conf)
   config.ts          Local-dev service base URLs + BFF URL (see the
@@ -63,12 +68,13 @@ internal state).
 
 ## Module Federation (this app is the host)
 
-`@module-federation/vite` wires six remotes (`order_mgmt_mfe`,
+`@module-federation/vite` wires eight remotes (`order_mgmt_mfe`,
 `inventory_mfe`, `planning_mfe`, `fulfillment_mfe`, `workforce_mfe`,
-`facility_mfe`), each built and deployed independently by its own repo on its
-own dev port (5181–5186, see README's port table). Shared singletons:
-`react`, `react-dom`, `react-router-dom`, `@warehouse/ui-kit` — so a version
-mismatch on any of these fails loudly rather than double-loading React.
+`facility_mfe`, `process_path_mfe`, `labor_mfe`), each built and deployed
+independently by its own repo on its own dev port (5181–5187 and 5189, see
+README's port table). Shared singletons: `react`, `react-dom`,
+`react-router-dom`, `@warehouse/ui-kit` — so a version mismatch on any of
+these fails loudly rather than double-loading React.
 
 ## Cross-cutting screens (the reason this shell exists beyond hosting)
 
@@ -123,8 +129,8 @@ not fixed by it.
 - `npm test` (vitest) green; new screens/behavior get a component test using
   Testing Library + MSW, following the existing pattern in
   `src/features/*/*.test.tsx`.
-- `npm run verify:routes` passes with the dev server + all 6 remote dev
-  servers + all 5 backend services + `console-bff` running (full-fleet smoke
+- `npm run verify:routes` passes with the dev server + all 8 remote dev
+  servers + all 8 backend services + `console-bff` running (full-fleet smoke
   check — not required for every change, but required before claiming a
   navigation/routing change works end-to-end).
 - No remote's business logic leaks into this repo; no direct DB access, ever.

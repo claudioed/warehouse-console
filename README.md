@@ -1,13 +1,18 @@
 # warehouse-console
 
 The React SPA shell for the [warehouse-systems](https://github.com/claudioed?tab=repositories&q=warehouse)
-micro-frontend console. Owns routing, top navigation, the shared design system, and four
-cross-cutting screens:
+micro-frontend console. Owns routing, top navigation, the shared design system, and the
+primary nav's five destinations — four cross-cutting screens this shell implements directly,
+plus one launchpad into everything else (see
+[ADR-0001](docs/docs/adr/0001-shell-owns-cross-cutting-screens-only.md) for why the nav is
+shaped this way):
 
-- **Operations Overview** (`/`) — a control-tower landing page: a live KPI strip (pick/pack/
-  SLAM queue depth, active sites) plus a launchpad grid into every bounded context, following
-  established enterprise WMS/ops-dashboard conventions (Manhattan Active WM's shift-start KPI
-  row, SAP Fiori's app-tile launchpad, Grafana/Datadog-style stat panels).
+- **Floor** (`/`) — the console's monitor surface: every monitored path across every site,
+  and what needs attention first. Built entirely on `warehouse-ops-agent`'s existing
+  `GET /daily-brief` read model (backlog, staffing, queue depth, stuck-task and correlated
+  exception signals across every site/path). Every alarm colour comes from a flag the
+  *backend* computed — the shell carries no thresholds of its own — and a missing reading
+  renders as "—" in warning tone, never a calm zero (signal-on-silence).
 - **Order Lifecycle** (`/order-lifecycle`) — traces one order across all four services that
   touch it (order-management → inventory-storage → wes-work-planning → fulfillment-execution)
   by calling the `console-bff` endpoint on `warehouse-ops-agent`.
@@ -15,6 +20,9 @@ cross-cutting screens:
   inventory flow accuracy, catalog growth.
 - **WES Dashboard** (`/wes-dashboard`) — the *when & in what order*: planning throughput,
   fulfillment throughput, labor management and labor performance.
+- **Contexts** (`/contexts`) — the launchpad grid into every bounded context, following
+  established enterprise WMS/ops-dashboard conventions (SAP Fiori's app-tile launchpad). It
+  lights up as active for its own route and for any of the eight remote routes below.
 
 Both dashboards read one section-oriented envelope from the console-bff
 (`GET /console/reports/{wms,wes}?from=&to=`, default trailing 24h) and render each section
@@ -26,8 +34,17 @@ the dashboard still shows its real numbers. Only a whole-request failure produce
 dashboard-level error state.
 
 Everything else (`/order-management`, `/inventory`, `/planning`, `/fulfillment`, `/workforce`,
-`/facility`) is a Module Federation remote owned by that bounded context's own repo — this
-shell only lazy-loads and hosts them; it never contains their business logic.
+`/facility`, `/process-path`, `/labor`) is a Module Federation remote owned by that bounded
+context's own repo, reachable from the Contexts launchpad — this shell only lazy-loads and
+hosts them; it never contains their business logic. An unmatched URL renders the shell's own
+client-side "Page not found" screen rather than a server 404.
+
+No repo in this fleet console owns an OpenAPI or AsyncAPI spec of its own: this shell has no
+domain model to describe (no aggregates, no endpoints it publishes), so there is nothing to
+spec here. Each bounded-context service publishes its own OpenAPI (HTTP) and AsyncAPI (Kafka)
+definitions in its own repo; `console-bff`'s report-envelope shape is documented in
+`warehouse-ops-agent`'s ADR-0002/ADR-0003 rather than as a formal spec, since it is a
+console-only read layer, not a public API.
 
 ## Study project disclaimer
 
@@ -58,6 +75,8 @@ built at least once) and each remote's own dev server running on its assigned po
 | fulfillment-mfe | 5184 | fulfillment-execution |
 | workforce-mfe | 5185 | workforce-management |
 | facility-mfe | 5186 | facility-layout |
+| labor-mfe | 5187 | labor-performance |
+| process-path-mfe | 5189 | process-path-management |
 
 ```bash
 # one-time: build the sibling ui-kit
@@ -69,7 +88,7 @@ npm run typecheck    # tsc -b --noEmit
 npm run lint         # oxlint
 npm run build
 
-# with the shell + all 6 remotes + all 5 backend services + BFF running:
+# with the shell + all 8 remotes + all 8 backend services + BFF running:
 npm run verify:routes   # headless Playwright smoke check of every route
 
 # needs only the shell's own dev server -- stubs the console-bff report calls:
@@ -85,3 +104,53 @@ The console's own service base URLs (`src/config.ts`) point at local-dev ports m
 `e2e-tests/env.sh`; swap to a runtime `/config.json` fetch before any multi-environment
 deployment (Vite env vars are baked in at build time, which doesn't fit "one image, many
 environments").
+
+## Deployment topology (kind / localhost)
+
+The shell and every remote are static bundles served by `nginx-unprivileged`
+pods. The fleet deliberately splits its two edges onto two independent host
+entrypoints, and **neither proxies to the other**:
+
+```
+http://localhost        -> Nginx web gateway -> this shell  (/)
+                                             -> each remote (/mfes/<context>/)
+
+http://localhost:8000   -> Kong              -> every bounded-context API
+                                                (/api/<context>/...)
+```
+
+Kong never serves HTML, JavaScript, CSS or fonts. The web gateway never
+proxies an API.
+
+Build the image (the ui-kit is a sibling checkout, so it is supplied as a
+named build context):
+
+```bash
+docker build --build-context uikit=../warehouse-ui-kit \
+  -t warehouse/warehouse-console:local .
+```
+
+### One image, many environments
+
+The former known gap — `src/config.ts` baking service URLs in at build time —
+is closed. `src/runtime-config.ts` fetches `/config.json` (mounted from the
+chart's ConfigMap) *before* the app mounts and publishes the validated result
+on `window.__WAREHOUSE_CONFIG__`; every remote reads the same object to build
+its own API base.
+
+```json
+{ "apiOrigin": "http://localhost:8000" }
+```
+
+Set it with `runtimeConfig.apiOrigin` in the Helm chart. Validation is strict
+and fail-fast: a missing, malformed, or path-carrying origin stops the console
+from mounting and says why, rather than rendering a silently broken UI.
+
+Two details worth knowing before changing this:
+
+- `src/main.tsx` imports `./App` **dynamically**, after the config resolves. A
+  static import would be hoisted and evaluated first, so `config.ts` would
+  read an empty config and throw in production.
+- The ConfigMap is mounted with `subPath`, which kubelet does **not**
+  live-update, so the Deployment carries a `checksum/runtime-config`
+  annotation to roll the pod whenever the value changes.
