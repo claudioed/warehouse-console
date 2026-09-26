@@ -9,8 +9,11 @@ sidebar_label: Getting Started
 ## Prerequisites
 
 `@warehouse/ui-kit` checked out as a sibling directory (`../warehouse-ui-kit`,
-built at least once) and, for a full-fleet check, each remote's own dev
-server running on its assigned port.
+built at least once), a local `public/config.json` (see
+[Runtime configuration](#runtime-configuration-configjson) below) and, for a
+full-fleet check, each remote's own dev server running on its assigned port.
+These ports apply to `npm run dev` only; a production build loads every
+remote from `/mfes/<context>/remoteEntry.js` on the web gateway instead.
 
 | Remote | Port | Repo |
 |---|---|---|
@@ -39,7 +42,8 @@ npm run build
 ## Verify
 
 ```bash
-# with the shell + all 8 remotes + all 8 backend services + BFF running:
+# with the shell + all 8 remote dev servers running, and the 8 backend
+# services + BFF reachable at config.json's apiOrigin (Kong):
 npm run verify:routes
 
 # needs only the shell's own dev server -- stubs the console-bff report calls:
@@ -57,9 +61,32 @@ right — every section available (charts draw real geometry), one section
 whole-request failure (one dashboard-level error state) — and writes
 screenshots to `/tmp/warehouse-console-dashboards`.
 
-## A known gap
+## Runtime configuration (`/config.json`)
 
-The console's own service base URLs (`src/config.ts`) point at local-dev
-ports matching `e2e-tests/env.sh`; swap to a runtime `/config.json` fetch
-before any multi-environment deployment (Vite env vars are baked in at build
-time, which doesn't fit "one image, many environments").
+The shell resolves its API location at runtime, not at build time:
+`src/runtime-config.ts` fetches `/config.json` **before** the app mounts,
+validates it, and publishes it on `window.__WAREHOUSE_CONFIG__`, which every
+remote also reads to build its own API base.
+
+```json
+{ "apiOrigin": "http://localhost:8000" }
+```
+
+`apiOrigin` must be a bare origin (scheme + host + port, no path). Every
+context is then addressed as `<apiOrigin>/api/<context>` — in the kind
+cluster that is Kong on `http://localhost:8000`, a different origin from the
+Nginx web gateway on `http://localhost` that serves the shell and the
+remotes. Neither edge proxies to the other.
+
+This fetch happens in `npm run dev` too, and the repo does not commit a
+`config.json`. Without one the dev server answers with its HTML fallback and
+the shell refuses to start (`Runtime configuration must be JSON, received
+"text/html"`). Create an untracked one before running the dev server:
+
+```bash
+mkdir -p public && echo '{ "apiOrigin": "http://localhost:8000" }' > public/config.json
+```
+
+In the cluster the file comes from the Helm chart's `runtimeConfig.apiOrigin`
+value (default `http://localhost:8000`), mounted from a ConfigMap and served
+by the shell's nginx with `Cache-Control: no-store`.
