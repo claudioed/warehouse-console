@@ -8,7 +8,8 @@ sidebar_label: Module Federation
 
 This app is the federation **host** (`@module-federation/vite`); each of the
 eight remotes is built and deployed independently by its own bounded-context
-repo.
+repo. The ports in the diagram are the remotes' **dev-server** ports, used by
+`npm run dev`.
 
 ```mermaid
 graph LR
@@ -31,6 +32,28 @@ graph LR
   Console --> Labor
   Console --> ProcessPath
 ```
+
+## Where a remote is loaded from
+
+`vite.config.ts` picks each remote's entry at build time:
+
+| Mode | Remote entry |
+|---|---|
+| `npm run dev` | `http://localhost:<dev-port>/remoteEntry.js` (ports above) |
+| `vite build` (the image) | `/mfes/<context>/remoteEntry.js` |
+
+In the kind cluster the Nginx web gateway on `http://localhost` serves this
+shell at `/` and each remote at `/mfes/<context>/` — `order-management`,
+`inventory-storage`, `wes-work-planning`, `fulfillment-execution`,
+`workforce-management`, `facility-layout`, `process-path-management`,
+`labor-performance`. The entry path is same-origin with the shell, so no
+remote needs a CORS policy for its assets. Kong on `http://localhost:8000`
+serves only the APIs and never handles HTML, JavaScript or CSS.
+
+`vite.config.ts` stays in object form (it reads `process.argv` for the build
+flag) rather than the `({ command }) => ({...})` callback form, because
+`vitest.config.ts` merges it with `mergeConfig`, which throws on a callback
+export.
 
 ## Shared singletons
 
@@ -64,7 +87,9 @@ inline "unavailable" card instead of white-screening the whole console.
 
 Nothing in this repo talks to any bounded context's storage or business
 rules directly. If a remote's screen needs data, it fetches it from its own
-service's REST API — the shell's only job is routing to the right remote and
-handling the two cross-cutting screens (see
-[Cross-cutting screens](./cross-cutting-screens.md)) that no single remote can
-answer.
+service's REST API at `<apiOrigin>/api/<context>`, reading `apiOrigin` from
+the `window.__WAREHOUSE_CONFIG__` object the shell publishes before it mounts
+(see [Getting started](../overview/getting-started.md#runtime-configuration-configjson)).
+The shell's only job is routing to the right remote and handling the
+cross-cutting screens (see [Cross-cutting screens](./cross-cutting-screens.md))
+that no single remote can answer.

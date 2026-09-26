@@ -6,28 +6,38 @@ sidebar_label: Cross-cutting Screens
 
 # Cross-cutting screens
 
-Two screens exist because no single bounded-context remote can answer them
-on its own: **Order Lifecycle** and the **WMS/WES report dashboards**. Both
-are answered by `console-bff`, a set of routes added to `warehouse-ops-agent`'s
-existing HTTP server (see that repo's ADR-0002 and ADR-0003) rather than a
-separate BFF process or a shared database.
+Four screens exist because no single bounded-context remote can answer
+them on its own: **Floor**, **Order Lifecycle** and the **WMS/WES report
+dashboards**. All of them are answered by `warehouse-ops-agent`'s HTTP
+server — Floor by its `GET /daily-brief` read model, the other three by the
+`console-bff` routes added to that same server (see that repo's ADR-0002 and
+ADR-0003) rather than a separate BFF process or a shared database. The shell
+reaches it at `<apiOrigin>/api/warehouse-ops-agent` (Kong, in the cluster).
 
 ```mermaid
 graph LR
   Console["warehouse-console"]
-  BFF["console-bff (in warehouse-ops-agent)"]
-  OM["order-management"]
-  IS["inventory-storage"]
-  WP["wes-work-planning"]
-  FE["fulfillment-execution"]
+  BFF["warehouse-ops-agent (daily-brief + console-bff)"]
 
-  Console -->|"GET /console/order-lifecycle/:id"| BFF
+  Console -->|"GET /daily-brief"| BFF
+  Console -->|"GET /console/orders/{id}/lifecycle"| BFF
   Console -->|"GET /console/reports/{wms,wes}"| BFF
-  BFF --> OM
-  BFF --> IS
-  BFF --> WP
-  BFF --> FE
 ```
+
+Which contexts the BFF fans out to for each screen is `warehouse-ops-agent`'s
+concern, not this shell's: the lifecycle trace calls order-management,
+inventory-storage, wes-work-planning and fulfillment-execution; the WMS
+dashboard reads the analytics reports of order-management, inventory-storage
+and facility-layout; the WES dashboard those of wes-work-planning,
+fulfillment-execution, workforce-management and labor-performance.
+
+## Floor
+
+The console's landing screen (`/`), polling `GET /daily-brief` — every
+monitored path across every site, and what needs attention first. Every
+alarm colour comes from a flag the backend computed; the shell carries no
+thresholds of its own, and a missing reading renders as missing, never as a
+calm zero.
 
 ## Order Lifecycle
 
