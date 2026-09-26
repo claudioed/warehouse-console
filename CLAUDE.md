@@ -54,9 +54,14 @@ src/
     contexts/         Launchpad into the eight bounded-context remotes
     not-found/        Client-rendered 404 (SPA fallback lands here, not a
                        server 404 — see nginx.conf)
-  config.ts          Local-dev service base URLs + BFF URL (see the
-                       "one image, many environments" note in config.ts —
-                       not yet solved, tracked as a known gap)
+  runtime-config.ts  Fetches + validates /config.json ({ apiOrigin }) BEFORE
+                       the app mounts; publishes window.__WAREHOUSE_CONFIG__,
+                       which every remote also reads
+  config.ts          Resolves every API base as <apiOrigin>/api/<context>
+                       (Kong); dev-port fallback only when not a production
+                       build; a production build without apiOrigin throws
+  main.tsx           Boot: loadRuntimeConfig() then a DYNAMIC import of
+                       ./App (a static import would read an empty config)
   test/              MSW mocks + test setup
 ```
 
@@ -71,8 +76,11 @@ internal state).
 `@module-federation/vite` wires eight remotes (`order_mgmt_mfe`,
 `inventory_mfe`, `planning_mfe`, `fulfillment_mfe`, `workforce_mfe`,
 `facility_mfe`, `process_path_mfe`, `labor_mfe`), each built and deployed
-independently by its own repo on its own dev port (5181–5187 and 5189, see
-README's port table). Shared singletons: `react`, `react-dom`,
+independently by its own repo. `vite.config.ts` loads them from their dev
+ports (5181–5187 and 5189, see README's port table) under `npm run dev`, and
+from `/mfes/<context>/remoteEntry.js` in a production build — the path the
+Nginx web gateway on `http://localhost` serves each remote at. Keep
+`vite.config.ts` in object form (see `.claude/rules/mfe-remotes.md`). Shared singletons: `react`, `react-dom`,
 `react-router-dom`, `@warehouse/ui-kit` — so a version mismatch on any of
 these fails loudly rather than double-loading React.
 
@@ -97,6 +105,8 @@ these fails loudly rather than double-loading React.
 ## Tech & standards
 
 - React 19, TypeScript (strict, `verbatimModuleSyntax`), Vite 8.
+- Remote-hosting pitfalls (vite config form, tiny relative `remoteEntry.js`,
+  selector collisions, the two-edge topology): `.claude/rules/mfe-remotes.md`.
 - `react-router-dom` v7 (client-side only — see `RouterLink.tsx` /
   `useDocumentTitle.ts`; no full-page reload on navigation, no server-side
   routing logic).
@@ -113,14 +123,18 @@ these fails loudly rather than double-loading React.
   Dockerfile/chart conventions where they translate to a static SPA —
   no database/Kafka/OTel blocks, `readOnlyRootFilesystem: true`.
 
-## Known gap (do not silently paper over)
+## Runtime configuration and the localhost edge
 
-`src/config.ts` bakes `SERVICE_BASE_URL`/`BFF_BASE_URL` in as build-time
-constants rather than reading them from a runtime-injected config. One image
-is only good for the environment it was built for — swap to a runtime
-`/config.json` fetch (or `VITE_*` build args per environment) before this
-goes past a single local/staging deployment. Flagged in the Dockerfile too;
-not fixed by it.
+One image serves any environment: the chart's `runtimeConfig.apiOrigin`
+(default `http://localhost:8000`, i.e. Kong) is mounted as `/config.json`
+and fetched before the app mounts. Validation is fail-fast — a missing,
+non-JSON or path-carrying origin stops the console with an explicit error.
+The fetch also happens under `npm run dev`, and no `config.json` is
+committed: create an untracked `public/config.json` locally or the dev
+server's HTML fallback makes the shell refuse to start. Nginx
+(`http://localhost`) serves the shell and remotes; Kong
+(`http://localhost:8000`) serves every API at `/api/<context>`; neither
+proxies to the other.
 
 ## Definition of done
 
