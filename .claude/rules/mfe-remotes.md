@@ -49,5 +49,6 @@ assuming this shell's fetch/caching logic is at fault.
 assets at `/mfes/<context>/`; `http://localhost:8000` (Kong) serves every
 backend REST API at `/api/<context>`. Neither proxies to the other — this
 is a deliberate, reviewed split (`warehouse-infra/docs/exposure/
-localhost-edge-topology.md`), not a gap. `src/config.ts`'s `apiOrigin`
-read from `/config.json` must point at the Kong origin, never at Nginx's.
+localhost-edge-topology.md`), not a gap. The `apiOrigin` that `src/runtime-config.ts` reads from
+`/config.json` (and `src/config.ts` builds every API URL from) must point at
+the Kong origin, never at Nginx's.

@@ -39,7 +39,7 @@ context's own repo, reachable from the Contexts launchpad — this shell only la
 hosts them; it never contains their business logic. An unmatched URL renders the shell's own
 client-side "Page not found" screen rather than a server 404.
 
-No repo in this fleet console owns an OpenAPI or AsyncAPI spec of its own: this shell has no
+This repo owns no OpenAPI or AsyncAPI spec of its own: this shell has no
 domain model to describe (no aggregates, no endpoints it publishes), so there is nothing to
 spec here. Each bounded-context service publishes its own OpenAPI (HTTP) and AsyncAPI (Kafka)
 definitions in its own repo; `console-bff`'s report-envelope shape is documented in
@@ -88,7 +88,8 @@ npm run typecheck    # tsc -b --noEmit
 npm run lint         # oxlint
 npm run build
 
-# with the shell + all 8 remotes + all 8 backend services + BFF running:
+# with the shell + all 8 remote dev servers running, and the 8 backend
+# services + BFF reachable at config.json's apiOrigin (Kong):
 npm run verify:routes   # headless Playwright smoke check of every route
 
 # needs only the shell's own dev server -- stubs the console-bff report calls:
@@ -100,10 +101,21 @@ section available (charts draw real geometry), one section `available: false` (t
 degrades, the others still draw), and a whole-request failure (one dashboard-level error
 state) — and writes screenshots to `/tmp/warehouse-console-dashboards`.
 
-The console's own service base URLs (`src/config.ts`) point at local-dev ports matching
-`e2e-tests/env.sh`; swap to a runtime `/config.json` fetch before any multi-environment
-deployment (Vite env vars are baked in at build time, which doesn't fit "one image, many
-environments").
+The shell fetches `/config.json` before it mounts in **every** mode, including `npm run dev`
+(see "One image, many environments" below). The repo does not commit one, so the dev
+server answers that request with its HTML fallback and the shell refuses to start with
+`Runtime configuration must be JSON, received "text/html"`. For local development create
+an untracked `public/config.json` first:
+
+```bash
+mkdir -p public && echo '{ "apiOrigin": "http://localhost:8000" }' > public/config.json
+```
+
+With that file in place every API call — the Floor, Order Lifecycle and dashboard BFF
+calls and the Contexts badges — goes to `<apiOrigin>/api/<context>` (Kong), not to each
+service's own dev port. The remotes themselves are still loaded from their dev servers on
+the ports above. `verify:dashboards` intercepts the report calls, so it only needs the
+file to exist; its values do not matter.
 
 ## Deployment topology (kind / localhost)
 
